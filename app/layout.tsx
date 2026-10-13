@@ -7,10 +7,21 @@ import type { Metadata, Viewport } from "next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { GoogleTagManager, GoogleAnalytics } from "@next/third-parties/google";
 import { getServerSideConfig } from "./config/server";
+import iconAssets from "./icon-assets.json";
 
 export const metadata: Metadata = {
   title: "NextChat",
   description: "Your personal AI assistant.",
+  icons: {
+    icon: [
+      { url: iconAssets.favicon, sizes: "32x32", type: "image/png" },
+      { url: iconAssets.svg, sizes: "any", type: "image/svg+xml" },
+    ],
+    shortcut: [
+      { url: iconAssets.shortcut, sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: iconAssets.apple, sizes: "180x180", type: "image/png" }],
+  },
   appleWebApp: {
     title: "NextChat",
     statusBarStyle: "default",
@@ -44,7 +55,7 @@ export default function RootLayout({
         />
         <link
           rel="manifest"
-          href="/site.webmanifest"
+          href={iconAssets.manifest}
           crossOrigin="use-credentials"
         ></link>
         <script src="/serviceWorkerRegister.js" defer></script>

@@ -37,3 +37,6 @@ jobs:
 
       - name: Run Jest tests
         run: yarn test:ci
+
+      - name: Verify desktop icon assets
+        run: yarn icons:check
