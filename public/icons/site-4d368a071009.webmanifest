@@ -4,31 +4,31 @@
   "short_name": "NextChat",
   "icons": [
     {
-      "src": "/icons/nextchat-cea7b3a5af4a-192.png",
+      "src": "/icons/nextchat-4d368a071009-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/nextchat-cea7b3a5af4a-512.png",
+      "src": "/icons/nextchat-4d368a071009-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/nextchat-cea7b3a5af4a-1024.png",
+      "src": "/icons/nextchat-4d368a071009-1024.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/icons/nextchat-cea7b3a5af4a-maskable-512.png",
+      "src": "/icons/nextchat-4d368a071009-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
     },
     {
-      "src": "/icons/nextchat-cea7b3a5af4a-maskable-1024.png",
+      "src": "/icons/nextchat-4d368a071009-maskable-1024.png",
       "sizes": "1024x1024",
       "type": "image/png",
       "purpose": "maskable"

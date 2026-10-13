@@ -1,0 +1,5 @@
+# Keep generated text assets identical on Windows and Linux.
+app/icon-assets.json text eol=lf
+public/icon.svg text eol=lf
+public/site.webmanifest text eol=lf
+public/icons/*.webmanifest text eol=lf

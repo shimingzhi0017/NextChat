@@ -5,10 +5,9 @@ import path from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const svg = await readFile(
-  path.join(root, "app/icons/nextchat-bot.svg"),
-  "utf8",
-);
+const svg = (
+  await readFile(path.join(root, "app/icons/nextchat-bot.svg"), "utf8")
+).replace(/\r\n?/g, "\n");
 // Use the repository's original artwork, including its gradients and shadows.
 // Rasterize the vector at each target size rather than enlarging a bitmap.
 if (/<image\b/i.test(svg) || !/viewBox="0 0 360 360"/.test(svg)) {
