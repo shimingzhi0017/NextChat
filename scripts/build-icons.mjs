@@ -92,7 +92,7 @@ generated.set(
   "app/icon-assets.json",
   Buffer.from(
     json({
-      favicon: asset(32),
+      favicon: asset(192),
       shortcut: asset(512),
       apple: asset(180),
       manifest: manifestUrl,

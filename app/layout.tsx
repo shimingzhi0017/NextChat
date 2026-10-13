@@ -14,7 +14,8 @@ export const metadata: Metadata = {
   description: "Your personal AI assistant.",
   icons: {
     icon: [
-      { url: iconAssets.favicon, sizes: "32x32", type: "image/png" },
+      { url: iconAssets.favicon, sizes: "192x192", type: "image/png" },
+      { url: iconAssets.shortcut, sizes: "512x512", type: "image/png" },
       { url: iconAssets.svg, sizes: "any", type: "image/svg+xml" },
     ],
     shortcut: [
