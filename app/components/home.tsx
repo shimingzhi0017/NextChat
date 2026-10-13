@@ -11,7 +11,7 @@ import LoadingIcon from "../icons/three-dots.svg";
 import { getCSSVar, useMobileScreen } from "../utils";
 
 import dynamic from "next/dynamic";
-import { Path, SlotID } from "../constant";
+import { Path, SlotID, ServiceProvider } from "../constant";
 import { ErrorBoundary } from "./error";
 
 import { getISOLang, getLang } from "../locales";
@@ -23,7 +23,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { SideBar } from "./sidebar";
-import { useAppConfig } from "../store/config";
+import { useAppConfig, ModelType } from "../store/config";
 import { AuthPage } from "./auth";
 import { getClientConfig } from "../config/client";
 import { type ClientApi, getClientApi } from "../client/api";
@@ -221,17 +221,55 @@ function Screen() {
 }
 
 export function useLoadData() {
-  const config = useAppConfig();
-
-  const api: ClientApi = getClientApi(config.modelConfig.providerName);
+  const providerName = useAppConfig((state) => state.modelConfig.providerName);
+  const accessCode = useAccessStore((state) => state.accessCode);
+  const openaiApiKey = useAccessStore((state) => state.openaiApiKey);
+  const openaiUrl = useAccessStore((state) => state.openaiUrl);
+  const useCustomConfig = useAccessStore((state) => state.useCustomConfig);
 
   useEffect(() => {
-    (async () => {
-      const models = await api.llm.models();
-      config.mergeModels(models);
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const api: ClientApi = getClientApi(providerName);
+        const models = await api.llm.models();
+        if (cancelled || models.length === 0) return;
+        const config = useAppConfig.getState();
+        config.mergeModels(models);
+        if (
+          models.every(
+            (model) => model.provider?.providerName === ServiceProvider.OpenAI,
+          ) &&
+          (!models.some((model) => model.name === config.modelConfig.model) ||
+            providerName !== ServiceProvider.OpenAI)
+        ) {
+          config.update((state) => {
+            if (
+              !models.some((model) => model.name === state.modelConfig.model)
+            ) {
+              state.modelConfig.model = models[0].name as ModelType;
+            }
+            state.modelConfig.providerName = ServiceProvider.OpenAI;
+            if (
+              !models.some(
+                (model) => model.name === state.modelConfig.compressModel,
+              )
+            ) {
+              state.modelConfig.compressModel = "";
+              state.modelConfig.compressProviderName = "";
+            }
+          });
+        }
+      } catch (error) {
+        if (!cancelled)
+          console.error("[Models] Unable to load model list", error);
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [providerName, accessCode, openaiApiKey, openaiUrl, useCustomConfig]);
 }
 
 export function Home() {
