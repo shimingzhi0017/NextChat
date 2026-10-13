@@ -5,31 +5,48 @@ import path from "node:path";
 import { Resvg } from "@resvg/resvg-js";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
-const svg = await readFile(path.join(root, "public/icon.svg"), "utf8");
-// Always rasterize vector geometry, never upscale a small bitmap or bake in blur.
-if (/<(?:image|filter)\b|filter\s*=|<feGaussianBlur\b/i.test(svg)) {
-  throw new Error("The desktop icon must contain sharp vector geometry only");
+const svg = await readFile(
+  path.join(root, "app/icons/nextchat-bot.svg"),
+  "utf8",
+);
+// Use the repository's original artwork, including its gradients and shadows.
+// Rasterize the vector at each target size rather than enlarging a bitmap.
+if (/<image\b/i.test(svg) || !/viewBox="0 0 360 360"/.test(svg)) {
+  throw new Error("Expected the original NextChat vector icon");
 }
-const version = createHash("sha256").update(svg).digest("hex").slice(0, 12);
+const artwork = svg.replace(/^<svg[^>]*>/, "").replace(/<\/svg>\s*$/, "");
+const maskableSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 360 360" width="1024" height="1024"><rect width="360" height="360" fill="#315EF8"/><g transform="translate(36 36) scale(.8)">${artwork}</g></svg>`;
+const version = createHash("sha256")
+  .update(svg + maskableSvg)
+  .digest("hex")
+  .slice(0, 12);
 const check = process.argv.includes("--check");
 const generated = new Map();
+generated.set("public/icon.svg", Buffer.from(svg));
 const asset = (size) => `/icons/nextchat-${version}-${size}.png`;
-const render = (size) => {
-  const result = new Resvg(svg, {
+const maskableAsset = (size) =>
+  `/icons/nextchat-${version}-maskable-${size}.png`;
+const render = (size, maskable = false) => {
+  const result = new Resvg(maskable ? maskableSvg : svg, {
     fitTo: { mode: "width", value: size },
   }).render();
   if (result.width !== size || result.height !== size) {
     throw new Error(`Icon must be ${size} x ${size}`);
   }
-  const pixels = result.pixels;
-  for (let i = 3; i < pixels.length; i += 4) {
-    if (pixels[i] !== 255)
-      throw new Error("Desktop icon background must be opaque");
+  if (maskable) {
+    const pixels = result.pixels;
+    for (let i = 3; i < pixels.length; i += 4) {
+      if (pixels[i] !== 255)
+        throw new Error("Maskable icon background must be opaque");
+    }
   }
   return result.asPng();
 };
 for (const size of [16, 32, 48, 180, 192, 256, 512, 1024]) {
   generated.set(`public${asset(size)}`, render(size));
+}
+for (const size of [512, 1024]) {
+  generated.set(`public${maskableAsset(size)}`, render(size, true));
 }
 // Compatibility URLs for older browsers and launchers.
 for (const [name, size] of [
@@ -73,7 +90,7 @@ const manifest = {
     }))
     .concat(
       [512, 1024].map((size) => ({
-        src: asset(size),
+        src: maskableAsset(size),
         sizes: `${size}x${size}`,
         type: "image/png",
         purpose: "maskable",
