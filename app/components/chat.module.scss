@@ -1,5 +1,9 @@
 @import "../styles/animation.scss";
 
+.attachment-button {
+  margin-bottom: 10px;
+}
+
 .document-attachments {
   display: flex;
   flex-direction: column;

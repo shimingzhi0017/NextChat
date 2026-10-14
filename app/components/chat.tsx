@@ -34,7 +34,7 @@ import ConfirmIcon from "../icons/confirm.svg";
 import CloseIcon from "../icons/close.svg";
 import CancelIcon from "../icons/cancel.svg";
 import ImageIcon from "../icons/image.svg";
-import UploadIcon from "../icons/upload.svg";
+import AttachmentIcon from "../icons/attachment.svg";
 
 import LightIcon from "../icons/light.svg";
 import DarkIcon from "../icons/dark.svg";
@@ -634,10 +634,14 @@ export function ChatActions(props: {
           />
         )}
 
-        <ChatAction
+        <IconButton
           onClick={props.uploadAttachment}
           text={Locale.Chat.InputActions.UploadAttachment}
-          icon={props.uploading ? <LoadingButtonIcon /> : <UploadIcon />}
+          title={Locale.Chat.Attachments.Hint}
+          icon={props.uploading ? <LoadingButtonIcon /> : <AttachmentIcon />}
+          className={styles["attachment-button"]}
+          disabled={props.uploading}
+          bordered
         />
         {showUploadImage && (
           <ChatAction
