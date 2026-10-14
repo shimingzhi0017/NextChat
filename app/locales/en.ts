@@ -82,6 +82,33 @@ const en: LocaleType = {
       Clear: "Clear Context",
       Settings: "Settings",
       UploadImage: "Upload Images",
+      UploadAttachment: "Add attachments",
+    },
+    Attachments: {
+      Hint: "PDF, DOCX, XLSX, text and code; up to 5 documents, 10MB each. Documents include extracted text only, without scans, embedded images or charts.",
+      Processing: "Reading",
+      Ready: "Ready",
+      Remove: "Remove attachment",
+      ViewContent: "View sent attachment text",
+      UnreadablePages: "No extractable text on pages",
+      Errors: {
+        tooLarge: "File exceeds 10MB. Please split it before uploading.",
+        tooMany: "Each message supports up to 5 documents or 3 images.",
+        tooLong:
+          "Combined document text exceeds 100,000 characters or the spreadsheet is too large. Please split it.",
+        unsupported:
+          "Unsupported format. Use PDF, DOCX, XLSX, text or code files. Convert legacy DOC and XLS files first.",
+        empty: "The file is empty or contains no readable text.",
+        scannedPdf:
+          "This PDF has no extractable text. Use OCR first, or upload the relevant pages as images.",
+        tooManyPages: "PDF exceeds 100 pages. Please split it.",
+        invalid:
+          "Could not read the file. Check for corruption or encryption and try again.",
+        binary:
+          "Could not decode text. Use UTF-8 or GB18030 encoded text files.",
+        visionRequired:
+          "Image input is not enabled for this model. Select a model that supports images.",
+      },
     },
     Rename: "Rename Chat",
     Typing: "Typing…",

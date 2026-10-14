@@ -1,5 +1,71 @@
 @import "../styles/animation.scss";
 
+.document-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 190px;
+  overflow-y: auto;
+  margin: 8px 0;
+  font-size: 12px;
+}
+
+.attachment-hint {
+  color: var(--black);
+  opacity: 0.65;
+  line-height: 1.5;
+}
+
+.document-attachment {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: var(--border-in-light);
+  border-radius: 8px;
+  background: var(--white);
+
+  > div {
+    min-width: 0;
+  }
+  strong {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  small {
+    display: block;
+    margin-top: 4px;
+    opacity: 0.7;
+  }
+  small.attachment-warning {
+    color: #b36a00;
+    opacity: 1;
+  }
+}
+
+.sent-attachments {
+  margin-top: 8px;
+  max-width: 100%;
+  font-size: 12px;
+
+  summary {
+    cursor: pointer;
+    overflow-wrap: anywhere;
+  }
+  summary span {
+    display: block;
+    margin-top: 4px;
+    opacity: 0.65;
+  }
+  pre {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    max-height: 300px;
+    overflow-y: auto;
+  }
+}
+
 .attach-images {
   position: absolute;
   left: 30px;

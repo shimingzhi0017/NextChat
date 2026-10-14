@@ -55,6 +55,7 @@ export type ChatMessageTool = {
 };
 
 export type ChatMessage = RequestMessage & {
+  attachmentSummary?: import("../utils/attachments").AttachmentSummary;
   date: string;
   streaming?: boolean;
   isError?: boolean;
@@ -408,6 +409,7 @@ export const useChatStore = createPersistStore(
         content: string,
         attachImages?: string[],
         isMcpResponse?: boolean,
+        attachmentSummary?: ChatMessage["attachmentSummary"],
       ) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
@@ -431,6 +433,7 @@ export const useChatStore = createPersistStore(
           role: "user",
           content: mContent,
           isMcpResponse,
+          attachmentSummary,
         });
 
         const botMessage: ChatMessage = createMessage({
