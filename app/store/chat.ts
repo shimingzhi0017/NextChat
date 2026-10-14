@@ -410,6 +410,7 @@ export const useChatStore = createPersistStore(
         attachImages?: string[],
         isMcpResponse?: boolean,
         attachmentSummary?: ChatMessage["attachmentSummary"],
+        files?: ChatMessage["files"],
       ) {
         const session = get().currentSession();
         const modelConfig = session.mask.modelConfig;
@@ -434,6 +435,7 @@ export const useChatStore = createPersistStore(
           content: mContent,
           isMcpResponse,
           attachmentSummary,
+          files: files?.length ? files : undefined,
         });
 
         const botMessage: ChatMessage = createMessage({
@@ -461,7 +463,7 @@ export const useChatStore = createPersistStore(
 
         const api: ClientApi = getClientApi(modelConfig.providerName);
         // make request
-        api.llm.chat({
+        const chatOptions: import("../client/api").ChatOptions = {
           messages: sendMessages,
           config: { ...modelConfig, stream: true },
           onUpdate(message) {
@@ -527,7 +529,17 @@ export const useChatStore = createPersistStore(
               controller,
             );
           },
-        });
+        };
+        if (
+          sendMessages.some((message) => message.files?.length) &&
+          modelConfig.providerName !== ServiceProvider.OpenAI
+        ) {
+          chatOptions.onError?.(
+            new Error(Locale.Chat.Attachments.Errors.nativeProviderRequired),
+          );
+        } else {
+          await api.llm.chat(chatOptions);
+        }
       },
 
       getMemoryPrompt() {
@@ -709,7 +721,7 @@ export const useChatStore = createPersistStore(
               }),
             );
           api.llm.chat({
-            messages: topicMessages,
+            messages: topicMessages.map(({ files, ...message }) => message),
             config: {
               model,
               stream: false,
@@ -767,13 +779,15 @@ export const useChatStore = createPersistStore(
            **/
           const { max_tokens, ...modelcfg } = modelConfig;
           api.llm.chat({
-            messages: toBeSummarizedMsgs.concat(
-              createMessage({
-                role: "system",
-                content: Locale.Store.Prompt.Summarize,
-                date: "",
-              }),
-            ),
+            messages: toBeSummarizedMsgs
+              .map(({ files, ...message }) => message)
+              .concat(
+                createMessage({
+                  role: "system",
+                  content: Locale.Store.Prompt.Summarize,
+                  date: "",
+                }),
+              ),
             config: {
               ...modelcfg,
               stream: true,

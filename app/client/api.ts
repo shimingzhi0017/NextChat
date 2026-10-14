@@ -49,6 +49,7 @@ export interface MultimodalContentForAlibaba {
 export interface RequestMessage {
   role: MessageRole;
   content: string | MultimodalContent[];
+  files?: import("../utils/attachments").NativeAttachment[];
 }
 
 export interface LLMConfig {

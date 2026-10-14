@@ -83,13 +83,22 @@ const cn = {
       UploadAttachment: "添加附件",
     },
     Attachments: {
-      Hint: "支持 PDF、DOCX、XLSX、文本和代码；最多 5 个文档，每个不超过 10MB。文档仅读取文字，扫描件及内嵌图片、图表不包含在内。",
-      Processing: "正在读取",
-      Ready: "已读取",
+      Hint: "直接发送 PDF、Word、Excel、文本和代码原文件；最多 5 个，合计不超过 2MB。",
+      Processing: "正在准备原文件",
+      Ready: "原文件已就绪",
       Remove: "移除附件",
+      NativeSent: "原文件附件",
+      NativeFailure:
+        "服务商未接受原文件请求，请确认其支持 Responses 文件输入；未转换为文字发送。",
+      NativePlugins: "原文件模式暂不支持插件，请先关闭当前对话的插件。",
+      NativeRequestTooLarge:
+        "本次请求包含的原文件、历史附件或图片过大。请减少附件，或新建对话。",
       ViewContent: "查看发送的附件文字",
       UnreadablePages: "以下页没有可读取的文字",
       Errors: {
+        nativeTooLarge: "原文件合计不能超过 2MB，请拆分后发送。",
+        nativeProviderRequired:
+          "原文件模式需要选择 OpenAI 兼容服务商，并由其支持 Responses 文件输入。",
         tooLarge: "文件超过 10MB，请拆分后上传。",
         tooMany: "每条消息最多添加 5 个文档或 3 张图片。",
         tooLong: "附件文字合计超过 10 万字符或表格过大，请拆分后上传。",

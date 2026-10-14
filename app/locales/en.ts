@@ -85,13 +85,24 @@ const en: LocaleType = {
       UploadAttachment: "Add attachments",
     },
     Attachments: {
-      Hint: "PDF, DOCX, XLSX, text and code; up to 5 documents, 10MB each. Documents include extracted text only, without scans, embedded images or charts.",
-      Processing: "Reading",
-      Ready: "Ready",
+      Hint: "Send original PDF, Word, Excel, text and code files; up to 5 files, 2MB combined.",
+      Processing: "Preparing original files",
+      Ready: "Original file ready",
       Remove: "Remove attachment",
+      NativeSent: "Original file attachment",
+      NativeFailure:
+        "The provider did not accept the original-file request. Check Responses file support; no text conversion was used.",
+      NativePlugins:
+        "Original-file mode does not support plugins yet. Disable plugins for this chat.",
+      NativeRequestTooLarge:
+        "Files, history attachments or images exceed the request limit. Remove files or start a new chat.",
       ViewContent: "View sent attachment text",
       UnreadablePages: "No extractable text on pages",
       Errors: {
+        nativeTooLarge:
+          "Original files cannot exceed 2MB combined. Split them before sending.",
+        nativeProviderRequired:
+          "Original-file mode requires an OpenAI-compatible provider with Responses file input support.",
         tooLarge: "File exceeds 10MB. Please split it before uploading.",
         tooMany: "Each message supports up to 5 documents or 3 images.",
         tooLong:

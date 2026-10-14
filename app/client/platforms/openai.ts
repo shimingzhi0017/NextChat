@@ -44,6 +44,11 @@ import {
   getTimeoutMSByModel,
 } from "@/app/utils";
 import { fetch } from "@/app/utils/stream";
+import {
+  buildNativeInput,
+  getNativeOutput,
+  readNativeStream,
+} from "@/app/utils/native-files";
 
 export interface OpenAIListModelResponse {
   object: string;
@@ -184,6 +189,9 @@ export class ChatGPTApi implements LLMApi {
   }
 
   async chat(options: ChatOptions) {
+    if (options.messages.some((message) => message.files?.length)) {
+      return this.chatWithFiles(options);
+    }
     const modelConfig = {
       ...useAppConfig.getState().modelConfig,
       ...useChatStore.getState().currentSession().mask.modelConfig,
@@ -426,6 +434,73 @@ export class ChatGPTApi implements LLMApi {
       options.onError?.(e as Error);
     }
   }
+  private async chatWithFiles(options: ChatOptions) {
+    const controller = new AbortController();
+    options.onController?.(controller);
+    const timeout = setTimeout(
+      () => controller.abort(),
+      getTimeoutMSByModel(options.config.model),
+    );
+    try {
+      if (
+        options.config.providerName !== ServiceProvider.OpenAI ||
+        _isDalle3(options.config.model)
+      )
+        throw new Error(Locale.Chat.Attachments.Errors.nativeProviderRequired);
+      if (useChatStore.getState().currentSession().mask.plugin?.length)
+        throw new Error(Locale.Chat.Attachments.NativePlugins);
+      const messages = await Promise.all(
+        options.messages.map(async (message) => ({
+          ...message,
+          content: await preProcessImageContent(message.content),
+        })),
+      );
+      const body = JSON.stringify({
+        model: options.config.model,
+        input: buildNativeInput(messages),
+        stream: !!options.config.stream,
+        store: false,
+      });
+      // The proxy is hosted on Vercel; count the encoded request, including history.
+      if (new TextEncoder().encode(body).length > 3.5 * 1024 * 1024)
+        throw new Error(Locale.Chat.Attachments.NativeRequestTooLarge);
+      const response = await fetch(this.path(OpenaiPath.ResponsesPath), {
+        method: "POST",
+        headers: getHeaders(),
+        body,
+        signal: controller.signal,
+      });
+      if (!response.ok) {
+        let detail = `HTTP ${response.status}`;
+        try {
+          const error = await response.json();
+          detail += `: ${String(
+            error.error?.message ?? error.message ?? error.msg ?? "",
+          ).slice(0, 500)}`;
+        } catch {}
+        throw new Error(`${Locale.Chat.Attachments.NativeFailure} (${detail})`);
+      }
+      const text = response.headers
+        .get("content-type")
+        ?.includes("text/event-stream")
+        ? await readNativeStream(
+            response,
+            (text, delta) => options.onUpdate?.(text, delta),
+          )
+        : getNativeOutput(await response.json());
+      options.onFinish(text, response);
+    } catch (error) {
+      if (controller.signal.aborted)
+        options.onError?.(new Error("Request aborted"));
+      else
+        options.onError?.(
+          error instanceof Error ? error : new Error(String(error)),
+        );
+    } finally {
+      clearTimeout(timeout);
+    }
+  }
+
   async usage() {
     const formatDate = (d: Date) =>
       `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}-${d

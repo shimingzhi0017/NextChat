@@ -52,6 +52,8 @@ export const IMAGE_ACCEPT =
   "image/png,image/jpeg,image/webp,image/heic,image/heif";
 
 export type AttachmentErrorCode =
+  | "nativeTooLarge"
+  | "nativeProviderRequired"
   | "tooLarge"
   | "tooMany"
   | "tooLong"
@@ -81,6 +83,62 @@ export interface DocumentAttachment {
 export interface AttachmentSummary {
   input: string;
   files: { name: string; size: number }[];
+  native?: boolean;
+}
+
+export interface NativeAttachment {
+  id: string;
+  name: string;
+  size: number;
+  fileData: string;
+}
+
+// Leave space for base64 expansion, history and images in the hosting request.
+export const MAX_NATIVE_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+
+export function validateNativeBatch(files: NativeAttachment[]) {
+  if (files.length > MAX_DOCUMENTS) throw new AttachmentError("tooMany");
+  if (
+    files.reduce((total, file) => total + file.size, 0) >
+    MAX_NATIVE_ATTACHMENT_BYTES
+  )
+    throw new AttachmentError("nativeTooLarge");
+}
+
+export async function readNativeAttachment(
+  file: File,
+): Promise<NativeAttachment> {
+  validateAttachmentSize(file);
+  if (file.size > MAX_NATIVE_ATTACHMENT_BYTES)
+    throw new AttachmentError("nativeTooLarge");
+  const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
+  if (
+    !TEXT_EXTENSIONS.has(extension) &&
+    !["pdf", "docx", "xlsx"].includes(extension)
+  )
+    throw new AttachmentError("unsupported");
+  const mime =
+    extension === "pdf"
+      ? "application/pdf"
+      : extension === "docx"
+      ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+      : extension === "xlsx"
+      ? "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      : "text/plain";
+  try {
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    const chunks: string[] = [];
+    for (let i = 0; i < bytes.length; i += 8192)
+      chunks.push(String.fromCharCode(...bytes.subarray(i, i + 8192)));
+    return {
+      id: crypto.randomUUID(),
+      name: file.name,
+      size: file.size,
+      fileData: `data:${mime};base64,${btoa(chunks.join(""))}`,
+    };
+  } catch {
+    throw new AttachmentError("invalid");
+  }
 }
 
 export function isImageAttachment(file: Pick<File, "name" | "type">) {

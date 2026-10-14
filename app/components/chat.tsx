@@ -82,12 +82,11 @@ import {
   ATTACHMENT_ACCEPT,
   IMAGE_ACCEPT,
   AttachmentError,
-  DocumentAttachment,
-  composeAttachmentMessage,
+  NativeAttachment,
   isImageAttachment,
-  readDocumentAttachment,
+  readNativeAttachment,
   validateAttachmentSize,
-  validateDocumentBatch,
+  validateNativeBatch,
 } from "@/app/utils/attachments";
 
 import dynamic from "next/dynamic";
@@ -1058,7 +1057,7 @@ function _Chat() {
   const isMobileScreen = useMobileScreen();
   const navigate = useNavigate();
   const [attachImages, setAttachImages] = useState<string[]>([]);
-  const [attachDocuments, setAttachDocuments] = useState<DocumentAttachment[]>(
+  const [attachDocuments, setAttachDocuments] = useState<NativeAttachment[]>(
     [],
   );
   const [processingFile, setProcessingFile] = useState("");
@@ -1155,15 +1154,18 @@ function _Chat() {
     setIsLoading(true);
     chatStore
       .onUserInput(
-        composeAttachmentMessage(userInput, attachDocuments),
+        userInput ||
+          (attachDocuments.length ? "Please analyze the attached files." : ""),
         attachImages,
         false,
         attachDocuments.length
           ? {
               input: userInput,
+              native: true,
               files: attachDocuments.map(({ name, size }) => ({ name, size })),
             }
           : undefined,
+        attachDocuments,
       )
       .finally(() => setIsLoading(false));
     setAttachImages([]);
@@ -1319,7 +1321,13 @@ function _Chat() {
     const textContent = getMessageTextContent(userMessage);
     const images = getMessageImages(userMessage);
     chatStore
-      .onUserInput(textContent, images, false, userMessage.attachmentSummary)
+      .onUserInput(
+        textContent,
+        images,
+        false,
+        userMessage.attachmentSummary,
+        userMessage.files,
+      )
       .finally(() => setIsLoading(false));
     inputRef.current?.focus();
   };
@@ -1570,7 +1578,7 @@ function _Chat() {
     const sourceSessionId = session.id;
     const documents = [...attachDocuments];
     const images: string[] = [];
-    const accepted: DocumentAttachment[] = [];
+    const accepted: NativeAttachment[] = [];
     try {
       for (const file of files) {
         if (chatStore.currentSession().id !== sourceSessionId) break;
@@ -1588,8 +1596,13 @@ function _Chat() {
             images.push(await uploadImageRemote(file));
           } else {
             if (documents.length >= 5) throw new AttachmentError("tooMany");
-            const doc = await readDocumentAttachment(file);
-            validateDocumentBatch([...documents, doc]);
+            if (
+              chatStore.currentSession().mask.modelConfig.providerName !==
+              ServiceProvider.OpenAI
+            )
+              throw new AttachmentError("nativeProviderRequired");
+            const doc = await readNativeAttachment(file);
+            validateNativeBatch([...documents, doc]);
             documents.push(doc);
             accepted.push(doc);
           }
@@ -2023,19 +2036,37 @@ function _Chat() {
                               parentRef={scrollRef}
                               defaultShow={i >= messages.length - 6}
                             />
-                            {message.attachmentSummary && (
-                              <details className={styles["sent-attachments"]}>
-                                <summary>
-                                  {message.attachmentSummary.files
-                                    .map((file) => file.name)
-                                    .join(" · ")}
-                                  <span>
-                                    {Locale.Chat.Attachments.ViewContent}
-                                  </span>
-                                </summary>
-                                <pre>{getMessageTextContent(message)}</pre>
-                              </details>
-                            )}
+                            {message.attachmentSummary &&
+                              (message.files?.length ? (
+                                <div className={styles["sent-attachments"]}>
+                                  {message.files.map((file) => (
+                                    <div key={file.id}>
+                                      <a
+                                        href={file.fileData}
+                                        download={file.name}
+                                      >
+                                        {file.name}
+                                      </a>
+                                      <span>
+                                        {" "}
+                                        · {Locale.Chat.Attachments.NativeSent}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <details className={styles["sent-attachments"]}>
+                                  <summary>
+                                    {message.attachmentSummary.files
+                                      .map((file) => file.name)
+                                      .join(" · ")}
+                                    <span>
+                                      {Locale.Chat.Attachments.ViewContent}
+                                    </span>
+                                  </summary>
+                                  <pre>{getMessageTextContent(message)}</pre>
+                                </details>
+                              ))}
                             {getMessageImages(message).length == 1 && (
                               <img
                                 className={styles["chat-message-item-image"]}
@@ -2135,12 +2166,6 @@ function _Chat() {
                           {Locale.Chat.Attachments.Ready} ·{" "}
                           {(doc.size / 1024).toFixed(1)} KB
                         </small>
-                        {!!doc.unreadablePages?.length && (
-                          <small className={styles["attachment-warning"]}>
-                            {Locale.Chat.Attachments.UnreadablePages}:{" "}
-                            {doc.unreadablePages.join(", ")}
-                          </small>
-                        )}
                       </div>
                       <IconButton
                         icon={<CloseIcon />}
