@@ -33,7 +33,6 @@ import PinIcon from "../icons/pin.svg";
 import ConfirmIcon from "../icons/confirm.svg";
 import CloseIcon from "../icons/close.svg";
 import CancelIcon from "../icons/cancel.svg";
-import ImageIcon from "../icons/image.svg";
 import AttachmentIcon from "../icons/attachment.svg";
 
 import LightIcon from "../icons/light.svg";
@@ -505,7 +504,6 @@ function useScrollToBottom(
 
 export function ChatActions(props: {
   uploadAttachment: () => void;
-  uploadImage: () => void;
   setAttachImages: (images: string[]) => void;
   setUploading: (uploading: boolean) => void;
   showPromptModal: () => void;
@@ -567,7 +565,6 @@ export function ChatActions(props: {
   }, [models, currentModel, currentProviderName]);
   const [showModelSelector, setShowModelSelector] = useState(false);
   const [showPluginSelector, setShowPluginSelector] = useState(false);
-  const [showUploadImage, setShowUploadImage] = useState(false);
 
   const [showSizeSelector, setShowSizeSelector] = useState(false);
   const [showQualitySelector, setShowQualitySelector] = useState(false);
@@ -584,7 +581,6 @@ export function ChatActions(props: {
 
   useEffect(() => {
     const show = isVisionModel(currentModel);
-    setShowUploadImage(show);
     if (!show) {
       props.setAttachImages([]);
       props.setUploading(false);
@@ -634,22 +630,19 @@ export function ChatActions(props: {
           />
         )}
 
-        <IconButton
+        <button
+          type="button"
           onClick={props.uploadAttachment}
-          text={Locale.Chat.InputActions.UploadAttachment}
           title={Locale.Chat.Attachments.Hint}
-          icon={props.uploading ? <LoadingButtonIcon /> : <AttachmentIcon />}
-          className={styles["attachment-button"]}
+          aria-label={Locale.Chat.InputActions.UploadAttachment}
+          className={clsx(
+            styles["chat-input-action"],
+            styles["attachment-button"],
+          )}
           disabled={props.uploading}
-          bordered
-        />
-        {showUploadImage && (
-          <ChatAction
-            onClick={props.uploadImage}
-            text={Locale.Chat.InputActions.UploadImage}
-            icon={props.uploading ? <LoadingButtonIcon /> : <ImageIcon />}
-          />
-        )}
+        >
+          {props.uploading ? <LoadingButtonIcon /> : <AttachmentIcon />}
+        </button>
         <ChatAction
           onClick={nextTheme}
           text={Locale.Chat.InputActions.Theme[theme]}
@@ -1628,24 +1621,15 @@ function _Chat() {
     }
   };
 
-  function chooseAttachments(imagesOnly: boolean) {
+  function uploadAttachment() {
     if (attachmentBusy.current) return;
     const fileInput = document.createElement("input");
     fileInput.type = "file";
-    fileInput.accept = imagesOnly
-      ? IMAGE_ACCEPT
-      : `${ATTACHMENT_ACCEPT},${IMAGE_ACCEPT}`;
+    fileInput.accept = `${ATTACHMENT_ACCEPT},${IMAGE_ACCEPT}`;
     fileInput.multiple = true;
     fileInput.onchange = () =>
       void addAttachments(Array.from(fileInput.files ?? []));
     fileInput.click();
-  }
-
-  function uploadImage() {
-    chooseAttachments(true);
-  }
-  function uploadAttachment() {
-    chooseAttachments(false);
   }
 
   // 快捷键 shortcut keys
@@ -2114,7 +2098,6 @@ function _Chat() {
 
               <ChatActions
                 uploadAttachment={uploadAttachment}
-                uploadImage={uploadImage}
                 setAttachImages={setAttachImages}
                 setUploading={setUploading}
                 showPromptModal={() => setShowPromptModal(true)}
